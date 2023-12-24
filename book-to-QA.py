@@ -20,8 +20,15 @@ def write_pretty_json(file_path, data):
         json.dump(data, write_file, indent=4)
     print(f"wrote {file_path}")
 
+if torch.cuda.is_available():
+    device = "cuda"
+    print("GPU is available. Using GPU for inference.")
+else:
+    device = "cpu"
+    print("GPU not available. Using CPU for inference.")
+
 model_path="models/OpenHermes-2-Mistral-7B"
-input_file="wtc_full_reformat.txt"
+input_file="source/wtc_full_reformat.txt"
 
 file_content=read_file(input_file)
 chapters=file_content.split("\n\n")
@@ -52,8 +59,10 @@ Quote:
 <|im_start|>assistant
 Question:"""
 
+print("Starting processing...")
 prompts=[]
 for i,p in enumerate(passages):
+	#print(f"Processing passage {i+1}/{len(passages)}...")
 	if i==0:
 		continue
 	prompt=prompt_template.format(par=passages[i], ctx=passages[i-1])
@@ -72,9 +81,28 @@ pipeline = transformers.pipeline(
 		device_map="auto",
 	)
 
-pipeline.tokenizer.add_special_tokens({"pad_token":"<pad>"})
-pipeline.model.resize_token_embeddings(len(pipeline.tokenizer))
-pipeline.model.config.pad_token_id = pipeline.tokenizer.pad_token_id
+#pipeline.tokenizer.add_special_tokens({"pad_token":"<pad>"})
+#pipeline.model.resize_token_embeddings(len(pipeline.tokenizer))
+#pipeline.model.config.pad_token_id = pipeline.tokenizer.pad_token_id
+
+# Check existing special tokens
+print("Existing pad token:", pipeline.tokenizer.pad_token)
+print("Existing unk token:", pipeline.tokenizer.unk_token)
+
+# Initial tokenizer size
+print("Initial tokenizer size:", len(pipeline.tokenizer))
+
+# Add special tokens if they don't exist
+#special_tokens_dict = {"pad_token": "<pad>", "unk_token": "<unk>"}
+#num_added_toks = pipeline.tokenizer.add_special_tokens(special_tokens_dict)
+
+# Check if resizing is necessary
+#if num_added_toks > 0:
+#    new_embedding_layer = pipeline.model.resize_token_embeddings(len(pipeline.tokenizer))
+
+# Size after adding tokens
+print("Tokenizer size after adding tokens:", len(pipeline.tokenizer))
+#	print("Embedding layer size after resizing:", new_embedding_layer.num_embeddings)
 
 gen_config = {
     "temperature": 0.7,

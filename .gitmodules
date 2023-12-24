@@ -1,0 +1,3 @@
+[submodule "models/OpenHermes-2-Mistral-7B"]
+	path = models/OpenHermes-2-Mistral-7B
+	url = https://huggingface.co/g-ronimo/Mistral-Bourdain
